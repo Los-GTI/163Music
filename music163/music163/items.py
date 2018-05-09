@@ -14,5 +14,7 @@ class MusicItem(scrapy.Item):
     id = scrapy.Field()
     artist = scrapy.Field()
     album = scrapy.Field()
+    albumIntroduction = scrapy.Field()
     music = scrapy.Field()
     comments = scrapy.Field()
+

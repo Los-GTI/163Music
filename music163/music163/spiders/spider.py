@@ -10,7 +10,7 @@ class MusicSpider(Spider):
     name = "music"
     allowed_domains = ["163.com"]
     base_url = 'https://music.163.com'
-    ids = ['1001','1002','1003','2001','2002','2003','6001','6002','6003','7001','7002','7003','4001','4002','4003']
+    ids = ['1001']
     initials = [i for i in range(65, 91)]+[0]
 
     def start_requests(self):
@@ -46,18 +46,21 @@ class MusicSpider(Spider):
             album_url = self.base_url + album
             yield Request(album_url, callback=self.parse_album)
 
-    # 获得所有专辑音乐的url
+    # 获得所有专辑音乐的url,获取专辑介绍
     def parse_album(self, response):
         musics = response.xpath('//ul[@class="f-hide"]/li/a/@href').extract()
-        for music in musics:
-            music_id = music[9:]
-            music_url = self.base_url + music
+        album_intro = response.xpath('//*[@id="album-desc-dot"]/p/text()').extract()
 
-            yield Request(music_url, meta={'id': music_id}, callback=self.parse_music)
+        for music in musics:
+                music_id = music[9:]
+                music_url = self.base_url + music
+
+                yield Request(music_url, meta={'id': music_id,'albumIntroduction':album_intro}, callback=self.parse_music)
 
     # 获得音乐信息
     def parse_music(self, response):
         music_id = response.meta['id']
+        album_intro = response.meta['albumIntroduction']
         music = response.xpath('//div[@class="tit"]/em[@class="f-ff2"]/text()').extract_first()
         artist = response.xpath('//div[@class="cnt"]/p[1]/span/a/text()').extract_first()
         album = response.xpath('//div[@class="cnt"]/p[2]/a/text()').extract_first()
@@ -70,7 +73,7 @@ class MusicSpider(Spider):
         DEFAULT_REQUEST_HEADERS['Referer'] = self.base_url + '/playlist?id=' + str(music_id)
         music_comment = 'http://music.163.com/weapi/v1/resource/comments/R_SO_4_' + str(music_id)
 
-        yield FormRequest(music_comment, meta={'id':music_id,'music':music,'artist':artist,'album':album}, \
+        yield FormRequest(music_comment, meta={'id':music_id,'albumIntroduction':album_intro,'music':music,'artist':artist,'album':album},
                           callback=self.parse_comment, formdata=data)
 
     # 获得所有音乐的热评数据
@@ -79,6 +82,7 @@ class MusicSpider(Spider):
         music = response.meta['music']
         artist = response.meta['artist']
         album = response.meta['album']
+        albumIntroduction = response.meta['albumIntroduction']
         result = json.loads(response.text)
         comments = []
         if 'hotComments' in result.keys():
