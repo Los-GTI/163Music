@@ -49,7 +49,7 @@ class MusicSpider(Spider):
     # 获得所有专辑音乐的url,获取专辑介绍
     def parse_album(self, response):
         musics = response.xpath('//ul[@class="f-hide"]/li/a/@href').extract()
-        album_intro = response.xpath('//*[@id="album-desc-dot"]/p/text()').extract()
+        album_intro = response.xpath('//*[@id="album-desc-more"]/p/text()').extract()
 
         for music in musics:
                 music_id = music[9:]
