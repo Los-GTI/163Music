@@ -6,10 +6,11 @@
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
-import scrapy
+from  fake_useragent import UserAgent
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
 import random
-
+from scrapy import log
+import time
 
 class Music163SpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -59,15 +60,60 @@ class Music163SpiderMiddleware(object):
         spider.logger.info('Spider opened: %s' % spider.name)
 
 
-class MyUserAgentMiddleware(UserAgentMiddleware):
-    # 设置User-Agent
-    def __init__(self, user_agent):
-        self.user_agent = user_agent
+class RandomUserAgentMiddleware(object):
+    # 使用fakeUseragent
+    def __init__(self, crawler):
+        super(RandomUserAgentMiddleware, self).__init__()
+        self.ua = UserAgent()
+        self.ua_type = crawler.settings.get('RANDOM_UA_TYPE', 'random')
 
     @classmethod
     def from_crawler(cls, crawler):
-        return cls( user_agent=crawler.settings.get('MY_USER_AGENT'))
+        return cls(crawler)
 
     def process_request(self, request, spider):
-        agent = random.choice(self.user_agent)
-        request.headers['User-Agent'] = agent
+        def get_ua():
+            return getattr(self.ua, self.ua_type)
+
+        request.headers.setdefault('User-Agent', get_ua())
+        # request.meta["proxy"] = "http://183.128.34.144:18118"
+
+
+# class MyProxiesSpiderMiddleware(object):
+#     def __init__(self, ip=''):
+#         self.ip = ip
+#
+#     def process_request(self, request, spider):
+#         thisip = random.choice(IPPOOL)
+#         print("this is ip:" + thisip["ipaddr"])
+#         request.meta["proxy"] = "https://" + thisip["ipaddr"]
+
+class ProxyMiddleWare(object):
+    def process_request(self, request, spider):
+        '''对request对象加上proxy'''
+        proxy = self.get_random_proxy()
+        print("this is request ip:" + proxy)
+        request.meta['proxy'] = proxy
+
+    def process_response(self, request, response, spider):
+        '''对返回的response处理'''
+        # 如果返回的response状态不是200，重新生成当前request对象
+        if response.status != 200:
+            proxy = self.get_random_proxy()
+            print("this is response ip:" + proxy)
+            # 对当前reque加上代理
+            request.meta['proxy'] = proxy
+            return request
+        return response
+
+    def get_random_proxy(self):
+        '''随机从文件中读取proxy'''
+        while 1:
+            with open('G:\\Scrapy_work\\myproxies\\myproxies\\proxies.txt', 'r') as f:
+                proxies = f.readlines()
+            if proxies:
+                break
+            else:
+                time.sleep(1)
+        proxy = random.choice(proxies).strip()
+        return proxy

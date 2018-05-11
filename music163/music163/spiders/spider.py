@@ -11,34 +11,35 @@ class MusicSpider(Spider):
     allowed_domains = ["163.com"]
     base_url = 'https://music.163.com'
     ids = ['1001']
-    initials = [i for i in range(65, 91)]+[0]
+    initials = [i for i in range(65, 91)] + [0]
 
     def start_requests(self):
         for id in self.ids:
             for initial in self.initials:
-                url = '{url}/discover/artist/cat?id={id}&initial={initial}'.format(url=self.base_url,id=id,initial=initial)
+                url = '{url}/discover/artist/cat?id={id}&initial={initial}'.format(url=self.base_url, id=id,initial=initial)
                 yield Request(url, callback=self.parse_index)
 
     # 获得所有歌手的url
-    def parse_index(self, response):        
-         for sel in response.xpath('//*[@id="m-artist-box"]/li/*'):     #网易云音乐的歌手页有两个组成部分，上方十个带头像的热门歌手和下方只显示姓名的普通歌手，原来的xpath选择器只能得到热门歌手id,现已修改
-             artist=sel.re('href\=\"\/artist\?id\=[(0-9)]{4,9}')
-             for artistid in artist:
-                 artist_url = self.base_url + '/artist' + '/album?' + artistid[14:]             
-                 yield Request(artist_url, callback=self.parse_artist_pre)
-     
-    def parse_artist_pre(self,response):
-        artist_albums=response.xpath('//*[@class="u-page"]/a[@class="zpgi"]/@href').extract()       #得到专辑页的翻页html elements列表
-        if artist_albums==[]:       #若为空，说明只有一页，即套用原parse_artist方法的代码，注意callback=self.parse_album
+    def parse_index(self, response):
+        for sel in response.xpath('//*[@id="m-artist-box"]/li/*'):  # 网易云音乐的歌手页有两个组成部分，上方十个带头像的热门歌手和下方只显示姓名的普通歌手，原来的xpath选择器只能得到热门歌手id,现已修改
+            artist = sel.re('href\=\"\/artist\?id\=[(0-9)]{4,9}')
+            for artistid in artist:
+                artist_url = self.base_url + '/artist' + '/album?' + artistid[14:]
+                yield Request(artist_url, callback=self.parse_artist_pre)
+
+    def parse_artist_pre(self, response):
+        artist_albums = response.xpath(
+            '//*[@class="u-page"]/a[@class="zpgi"]/@href').extract()  # 得到专辑页的翻页html elements列表
+        if artist_albums == []:  # 若为空，说明只有一页，即套用原parse_artist方法的代码，注意callback=self.parse_album
             albums = response.xpath('//*[@id="m-song-module"]/li/div/a[@class="msk"]/@href').extract()
             for album in albums:
                 album_url = self.base_url + album
-                yield Request(album_url, callback=self.parse_album)            
-        else:       #若不为空，即该歌手专辑存在分页，那么得到分页的url，注意callback=self.parse_artist
+                yield Request(album_url, callback=self.parse_album)
+        else:  # 若不为空，即该歌手专辑存在分页，那么得到分页的url，注意callback=self.parse_artist
             for artist_album in artist_albums:
                 artist_album_url = self.base_url + artist_album
                 yield Request(artist_album_url, callback=self.parse_artist)
-                
+
     # 获得所有歌手专辑的url
     def parse_artist(self, response):
         albums = response.xpath('//*[@id="m-song-module"]/li/div/a[@class="msk"]/@href').extract()
@@ -52,10 +53,10 @@ class MusicSpider(Spider):
         album_intro = response.xpath('//*[@id="album-desc-more"]/p/text()').extract()
 
         for music in musics:
-                music_id = music[9:]
-                music_url = self.base_url + music
+            music_id = music[9:]
+            music_url = self.base_url + music
 
-                yield Request(music_url, meta={'id': music_id,'albumIntroduction':album_intro}, callback=self.parse_music)
+            yield Request(music_url, meta={'id': music_id, 'albumIntroduction': album_intro}, callback=self.parse_music)
 
     # 获得音乐信息
     def parse_music(self, response):
@@ -73,8 +74,7 @@ class MusicSpider(Spider):
         DEFAULT_REQUEST_HEADERS['Referer'] = self.base_url + '/playlist?id=' + str(music_id)
         music_comment = 'http://music.163.com/weapi/v1/resource/comments/R_SO_4_' + str(music_id)
 
-        yield FormRequest(music_comment, meta={'id':music_id,'albumIntroduction':album_intro,'music':music,'artist':artist,'album':album},
-                          callback=self.parse_comment, formdata=data)
+        yield FormRequest(music_comment,meta={'id': music_id, 'albumIntroduction': album_intro, 'music': music, 'artist': artist,'album': album}, callback=self.parse_comment, formdata=data)
 
     # 获得所有音乐的热评数据
     def parse_comment(self, response):
