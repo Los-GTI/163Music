@@ -10,7 +10,7 @@ import scrapy
 
 class MusicItem(scrapy.Item):
     # define the fields for your item here like:
-    table_name = 'music'
+    table_name = 'hot_music'
     id = scrapy.Field()
     artist = scrapy.Field()
     album = scrapy.Field()

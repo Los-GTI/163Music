@@ -109,7 +109,7 @@ class ProxyMiddleWare(object):
     def get_random_proxy(self):
         '''随机从文件中读取proxy'''
         while 1:
-            with open('G:\\Scrapy_work\\myproxies\\myproxies\\proxies.txt', 'r') as f:
+            with open('F:\\163Music\\music163\\tools\\proxies.txt', 'r') as f:
                 proxies = f.readlines()
             if proxies:
                 break

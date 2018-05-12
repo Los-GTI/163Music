@@ -11,12 +11,12 @@ class MusicSpider(Spider):
     allowed_domains = ["163.com"]
     base_url = 'https://music.163.com'
     ids = ['1001']
-    initials = [i for i in range(65, 91)] + [0]
+    #initials = [i for i in range(65, 91)] + [0]
 
     def start_requests(self):
         for id in self.ids:
-            for initial in self.initials:
-                url = '{url}/discover/artist/cat?id={id}&initial={initial}'.format(url=self.base_url, id=id,initial=initial)
+            #for initial in self.initials:
+                url = '{url}/discover/artist/cat?id={id}&initial=-1'.format(url=self.base_url, id=id)
                 yield Request(url, callback=self.parse_index)
 
     # 获得所有歌手的url

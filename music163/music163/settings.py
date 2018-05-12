@@ -65,7 +65,7 @@ DEFAULT_REQUEST_HEADERS = {
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     'music163.middlewares.RandomUserAgentMiddleware': 543,
-    'music163.middlewares.ProxyMiddleWare': 543,
+    #'music163.middlewares.ProxyMiddleWare': 543,
     # 'scrapy.downloadermiddleware.useragent.UserAgentMiddleware':None,
     # 'music163.middlewares.MyUserAgentMiddleware': 400,
 }
